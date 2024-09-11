@@ -1,0 +1,58 @@
+﻿@page "/upload"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Forms
+@inject HttpClient Http
+
+
+<h3>File Upload</h3>
+
+<InputFile OnChange="HandleFileSelected" />
+
+@if (uploadProgress > 0)
+{
+    <p>Upload Progress: @uploadProgress%</p>
+}
+
+@code {
+    private int uploadProgress = 0;
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        Console.WriteLine("File selected"); // Log file selection
+
+        var file = e.File;
+        if (file == null)
+        {
+            Console.WriteLine("No file selected");
+            return;
+        }
+
+        const int chunkSize = 1024 * 31; // 1MB chunks
+        var buffer = new byte[chunkSize];
+        var totalChunks = (int)Math.Ceiling((double)file.Size / chunkSize);
+
+        using (var stream = file.OpenReadStream(file.Size))
+        {
+           
+            for (int i = 0; i < totalChunks; i++)
+            {
+                Console.WriteLine($"{i} element start count:{stream.Position}");
+                var bytesRead = await stream.ReadAsync(buffer, 0, chunkSize);
+                var chunk = new byte[bytesRead];
+                Array.Copy(buffer, chunk, bytesRead);
+                Console.WriteLine($"{i} element end count:{stream.Position}"); // Log current position in file (for debugging)
+
+                using var content = new MultipartFormDataContent();
+                content.Add(new ByteArrayContent(chunk), "file", file.Name);
+
+                var response = await Http.PostAsync("https://localhost:7206/api/upload", content);
+                response.EnsureSuccessStatusCode();
+
+                uploadProgress = (int)((i + 1) / (double)totalChunks * 100);
+                StateHasChanged();
+            }
+        }
+
+        //Console.WriteLine("File upload completed"); // Log upload completion
+    }
+}
