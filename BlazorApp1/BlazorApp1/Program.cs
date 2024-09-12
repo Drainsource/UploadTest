@@ -1,4 +1,3 @@
-using BlazorApp1.Client.Pages;
 using BlazorApp1.Components;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -44,9 +43,7 @@ app.UseAntiforgery();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode()
-    .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(BlazorApp1.Client._Imports).Assembly);
+    .AddInteractiveServerRenderMode();
 
 
 
